@@ -136,7 +136,7 @@ export function startBgMusic() {
   const ac = getCtx();
   function loop() {
     if (!bgRunning) return;
-    const end = scheduleMelody(ac.currentTime);
+    scheduleMelody(ac.currentTime);
     scheduleBass(ac.currentTime);
     const loopLen = melody.reduce((s, [, d]) => s + (d as number), 0);
     bgTimeout = setTimeout(loop, (loopLen - 0.1) * 1000);

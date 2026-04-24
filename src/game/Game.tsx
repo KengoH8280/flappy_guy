@@ -1,14 +1,17 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { GW, GH, makeInitialState, DEATHS_FOR_AD } from './gameState';
-import { updateGame, flap, startGame, dismissAd, AudioEvent } from './gameLogic';
+import { updateGame, flap, startGame, AudioEvent } from './gameLogic';
 import { render } from './renderer';
 import {
   playFlap, playCoin, playMiss, playDie, playPoint,
   startBgMusic, stopBgMusic, resumeAudioContext,
 } from './audio';
-import AdScreen from '../components/AdScreen';
 
-export default function Game() {
+interface GameProps {
+  onGameOver?: () => void;
+}
+
+export default function Game({ onGameOver }: GameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef(makeInitialState());
   const rafRef = useRef<number>(0);
@@ -18,8 +21,11 @@ export default function Game() {
 
   const markDead = useCallback(() => {
     isDeadRef.current = true;
-    setTimeout(() => setIsDead(true), 350);
-  }, []);
+    // Update immediately without setTimeout to fix black screen bug
+    setIsDead(true);
+    // Trigger parent's game over handler
+    onGameOver?.();
+  }, [onGameOver]);
 
   const markAlive = useCallback(() => {
     isDeadRef.current = false;
@@ -61,13 +67,6 @@ export default function Game() {
       handleAudio('flap');
     }
   }, [handleAudio, showAd]);
-
-  const handleAdDismiss = useCallback(() => {
-    resumeAudioContext();
-    setShowAd(false);
-    dismissAd(stateRef.current);
-    markAlive();
-  }, [markAlive]);
 
   const handleRetry = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
@@ -118,6 +117,8 @@ export default function Game() {
     return () => window.removeEventListener('keydown', onKey);
   }, [handleInput]);
 
+  const currentScore = stateRef.current.score;
+
   return (
     <div
       style={{
@@ -149,6 +150,24 @@ export default function Game() {
             imageRendering: 'pixelated',
           }}
         />
+
+        {/* Score Display */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '10px',
+            left: '10px',
+            color: '#00FF00',
+            fontFamily: '"Courier New", monospace',
+            fontSize: 'clamp(12px, 2vw, 18px)',
+            fontWeight: 'bold',
+            textShadow: '0 0 10px rgba(0,255,0,0.5)',
+            zIndex: 10,
+            pointerEvents: 'none',
+          }}
+        >
+          SCORE: {currentScore}
+        </div>
 
         {/* CRT scanlines */}
         <div
@@ -202,9 +221,32 @@ export default function Game() {
             </button>
           </div>
         )}
-      </div>
 
-      {showAd && <AdScreen onDismiss={handleAdDismiss} />}
+        {/* Game Over placeholder (AdMob ad shown externally) */}
+        {isDead && showAd && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(0,0,0,0.7)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              pointerEvents: 'none',
+              fontSize: '18px',
+              color: '#00FF00',
+              fontFamily: '"Courier New", monospace',
+            }}
+          >
+            <div style={{ textAlign: 'center' }}>
+              <div>[ AD LOADING ]</div>
+              <div style={{ fontSize: '12px', marginTop: '10px', opacity: 0.7 }}>
+                Please wait...
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       <style>{`
         @keyframes retryPulse {
@@ -215,3 +257,4 @@ export default function Game() {
     </div>
   );
 }
+

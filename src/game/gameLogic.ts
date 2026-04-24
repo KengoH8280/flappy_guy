@@ -3,7 +3,7 @@ import {
   GW, GROUND_Y, CEILING_Y, BIRD_X, BIRD_W, BIRD_H,
   COIN_SPEED, COIN_BASE_INTERVAL,
   GRAVITY, FLAP_VY, MAX_FALL, MAX_MISSES,
-  makeBird, makeInitialState,
+  makeInitialState,
 } from './gameState';
 
 const COIN_R = 5;
@@ -12,12 +12,11 @@ function randBetween(a: number, b: number) {
   return a + Math.random() * (b - a);
 }
 
-function spawnCoin(score: number): Coin {
+function spawnCoin(_score: number): Coin {
   const margin = 20;
   const minY = CEILING_Y + margin;
   const maxY = GROUND_Y - margin;
   const y = randBetween(minY, maxY);
-  const speedBoost = Math.min(score * 0.02, 0.8);
   return {
     x: GW + 8,
     y,
