@@ -1,37 +1,30 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
-import { GW, GH, makeInitialState } from './gameState';
-import { updateGame, flap, startGame, AudioEvent } from './gameLogic';
-import { render } from './renderer';
+import { GW, GH, makeInitialState } from '@/lib/gameState';
+import { updateGame, flap, startGame } from '@/lib/gameLogic';
+import { render } from '@/lib/renderer';
 import {
-  playFlap, playCoin, playMiss, playDie, playPoint,
+  playFlap, playCoin, playMiss, playDie,
   startBgMusic, resumeAudioContext,
-} from './audio';
+} from '@/lib/audio';
 
-interface GameProps {
-  onGameOver?: () => void;
-}
-
-export default function Game({ onGameOver }: GameProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+export default function Game() {
+  const canvasRef = useRef(null);
   const stateRef = useRef(makeInitialState());
-  const rafRef = useRef<number>(0);
+  const rafRef = useRef(0);
   const [isDead, setIsDead] = useState(false);
   const isDeadRef = useRef(false);
 
   const markDead = useCallback(() => {
     isDeadRef.current = true;
-    // Update immediately without setTimeout to fix black screen bug
-    setIsDead(true);
-    // Trigger parent's game over handler
-    onGameOver?.();
-  }, [onGameOver]);
+    setTimeout(() => setIsDead(true), 350);
+  }, []);
 
   const markAlive = useCallback(() => {
     isDeadRef.current = false;
     setIsDead(false);
   }, []);
 
-  const handleAudio = useCallback((e: AudioEvent) => {
+  const handleAudio = useCallback((e) => {
     switch (e) {
       case 'flap': playFlap(); break;
       case 'coin': playCoin(); break;
@@ -40,7 +33,7 @@ export default function Game({ onGameOver }: GameProps) {
         playDie();
         markDead();
         break;
-      case 'point': playPoint(); break;
+      case 'point': break;
     }
   }, [markDead]);
 
@@ -54,7 +47,6 @@ export default function Game({ onGameOver }: GameProps) {
   const handleInput = useCallback(() => {
     resumeAudioContext();
     const state = stateRef.current;
-
     if (state.phase === 'start') {
       startGame(state);
       startBgMusic();
@@ -66,7 +58,7 @@ export default function Game({ onGameOver }: GameProps) {
     }
   }, [handleAudio]);
 
-  const handleRetry = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+  const handleRetry = useCallback((e) => {
     e.stopPropagation();
     if ('preventDefault' in e) e.preventDefault();
     doRetry();
@@ -85,10 +77,8 @@ export default function Game({ onGameOver }: GameProps) {
     function loop() {
       const state = stateRef.current;
       updateGame(state, handleAudio);
-
-      ctx!.clearRect(0, 0, GW * 2, GH * 2);
-      render(ctx!, state);
-
+      ctx.clearRect(0, 0, GW * 2, GH * 2);
+      render(ctx, state);
       rafRef.current = requestAnimationFrame(loop);
     }
 
@@ -97,7 +87,7 @@ export default function Game({ onGameOver }: GameProps) {
   }, [handleAudio]);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
+    const onKey = (e) => {
       if (e.code === 'Space' || e.code === 'ArrowUp') {
         e.preventDefault();
         handleInput();
@@ -106,8 +96,6 @@ export default function Game({ onGameOver }: GameProps) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [handleInput]);
-
-  const currentScore = stateRef.current.score;
 
   return (
     <div
@@ -140,24 +128,6 @@ export default function Game({ onGameOver }: GameProps) {
             imageRendering: 'pixelated',
           }}
         />
-
-        {/* Score Display */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '10px',
-            left: '10px',
-            color: '#00FF00',
-            fontFamily: '"Courier New", monospace',
-            fontSize: 'clamp(12px, 2vw, 18px)',
-            fontWeight: 'bold',
-            textShadow: '0 0 10px rgba(0,255,0,0.5)',
-            zIndex: 10,
-            pointerEvents: 'none',
-          }}
-        >
-          SCORE: {currentScore}
-        </div>
 
         {/* CRT scanlines */}
         <div
@@ -216,10 +186,9 @@ export default function Game({ onGameOver }: GameProps) {
       <style>{`
         @keyframes retryPulse {
           from { box-shadow: 4px 4px 0 #003300, 0 0 10px rgba(0,255,0,0.4); }
-          to   { box-shadow: 4px 4px 0 #003300, 0 0 22px rgba(0,255,0,0.8); }
+          to { box-shadow: 4px 4px 0 #003300, 0 0 22px rgba(0,255,0,0.8); }
         }
       `}</style>
     </div>
   );
 }
-
