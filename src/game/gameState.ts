@@ -12,9 +12,8 @@ export const GRAVITY = 0.11;
 export const FLAP_VY = -2.56; // 80% of original -3.2
 export const MAX_FALL = 4;
 export const MAX_MISSES = 3;
-export const DEATHS_FOR_AD = 5;
 
-export type Phase = 'start' | 'playing' | 'dead' | 'ad';
+export type Phase = 'start' | 'playing' | 'dead';
 
 export interface Bird {
   y: number;
@@ -45,7 +44,6 @@ export interface GameState {
   frameCount: number;
   coinTimer: number;
   highScore: number;
-  adTimer: number;
   bgScroll: number;
   groundScroll: number;
   flashTimer: number;
@@ -84,7 +82,6 @@ export function makeInitialState(): GameState {
     frameCount: 0,
     coinTimer: 0,
     highScore: parseInt(localStorage.getItem('kusoge_hi') || '0', 10),
-    adTimer: 0,
     bgScroll: 0,
     groundScroll: 0,
     flashTimer: 0,

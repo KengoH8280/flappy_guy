@@ -1,10 +1,10 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
-import { GW, GH, makeInitialState, DEATHS_FOR_AD } from './gameState';
+import { GW, GH, makeInitialState } from './gameState';
 import { updateGame, flap, startGame, AudioEvent } from './gameLogic';
 import { render } from './renderer';
 import {
   playFlap, playCoin, playMiss, playDie, playPoint,
-  startBgMusic, stopBgMusic, resumeAudioContext,
+  startBgMusic, resumeAudioContext,
 } from './audio';
 
 interface GameProps {
@@ -16,7 +16,6 @@ export default function Game({ onGameOver }: GameProps) {
   const stateRef = useRef(makeInitialState());
   const rafRef = useRef<number>(0);
   const [isDead, setIsDead] = useState(false);
-  const [showAd, setShowAd] = useState(false);
   const isDeadRef = useRef(false);
 
   const markDead = useCallback(() => {
@@ -55,7 +54,6 @@ export default function Game({ onGameOver }: GameProps) {
   const handleInput = useCallback(() => {
     resumeAudioContext();
     const state = stateRef.current;
-    if (showAd) return;
 
     if (state.phase === 'start') {
       startGame(state);
@@ -66,21 +64,13 @@ export default function Game({ onGameOver }: GameProps) {
       flap(state);
       handleAudio('flap');
     }
-  }, [handleAudio, showAd]);
+  }, [handleAudio]);
 
   const handleRetry = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
     if ('preventDefault' in e) e.preventDefault();
-    const state = stateRef.current;
-    if (state.deathCount >= DEATHS_FOR_AD) {
-      setShowAd(true);
-      stopBgMusic();
-      markAlive();
-      state.phase = 'ad';
-    } else {
-      doRetry();
-    }
-  }, [doRetry, markAlive]);
+    doRetry();
+  }, [doRetry]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -187,7 +177,7 @@ export default function Game({ onGameOver }: GameProps) {
           }}
         />
 
-        {isDead && !showAd && (
+        {isDead && (
           <div
             style={{
               position: 'absolute',
@@ -219,31 +209,6 @@ export default function Game({ onGameOver }: GameProps) {
             >
               ▶ RETRY
             </button>
-          </div>
-        )}
-
-        {/* Game Over placeholder (AdMob ad shown externally) */}
-        {isDead && showAd && (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'rgba(0,0,0,0.7)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              pointerEvents: 'none',
-              fontSize: '18px',
-              color: '#00FF00',
-              fontFamily: '"Courier New", monospace',
-            }}
-          >
-            <div style={{ textAlign: 'center' }}>
-              <div>[ AD LOADING ]</div>
-              <div style={{ fontSize: '12px', marginTop: '10px', opacity: 0.7 }}>
-                Please wait...
-              </div>
-            </div>
           </div>
         )}
       </div>

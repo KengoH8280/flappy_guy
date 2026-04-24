@@ -60,11 +60,6 @@ export function startGame(state: GameState): void {
   state.phase = 'playing';
 }
 
-export function dismissAd(state: GameState): void {
-  state.phase = 'start';
-  state.deathCount = 0;
-}
-
 export function updateGame(
   state: GameState,
   onAudio: (e: AudioEvent) => void,
@@ -76,7 +71,6 @@ export function updateGame(
       state.bird.deathSpin += state.bird.deathSpinV;
       if (state.bird.deathSpinV > 0) state.bird.deathSpinV -= 0.2;
     }
-    if (state.phase === 'ad') state.adTimer++;
     state.bgScroll = (state.bgScroll + 0.25) % GW;
     return;
   }

@@ -1,6 +1,5 @@
 import {
   GameState, GW, GH, GROUND_Y, CEILING_Y, BIRD_X, BIRD_W, BIRD_H,
-  DEATHS_FOR_AD,
 } from './gameState';
 
 const P = 2;
@@ -302,7 +301,7 @@ function drawHUD(ctx: CanvasRenderingContext2D, state: GameState) {
   }
 
   // death counter (top-right)
-  drawPixelText(ctx, GW - 22, 15, `x${deathCount}`, deathCount >= DEATHS_FOR_AD - 1 ? '#FF4444' : '#CCCCCC', '#000000', 2);
+  drawPixelText(ctx, GW - 22, 15, `x${deathCount}`, deathCount >= 4 ? '#FF4444' : '#CCCCCC', '#000000', 2);
   drawSkull(ctx, GW - 7, 18);
 
   // flash miss warning
@@ -387,9 +386,5 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState) {
     drawPixelText(ctx, GW / 2 - 20, GH / 2 - 26, 'DEAD!', '#FF4444', '#000000', 4);
     const sc = `SCORE: ${state.score}`;
     drawPixelText(ctx, GW / 2 - sc.length * 4, GH / 2 + 2, sc, '#FFD700', '#333333', 2);
-
-    if (state.deathCount >= DEATHS_FOR_AD - 1) {
-      drawPixelText(ctx, GW / 2 - 40, GH / 2 + 14, 'ADS COMING SOON!', '#FF3300', '#000000', 2);
-    }
   }
 }
