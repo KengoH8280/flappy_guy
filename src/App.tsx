@@ -1,18 +1,26 @@
 import { useEffect, useRef, useCallback } from 'react';
 import Game from './game/Game';
-import { AdMob, InterstitialAdPluginEvents } from '@capacitor-community/admob';
+
+let AdMob: any = null;
+let InterstitialAdPluginEvents: any = null;
+
+// Try to load AdMob if available (Capacitor environment)
+try {
+  const admobModule = require('@capacitor-community/admob');
+  AdMob = admobModule.AdMob;
+  InterstitialAdPluginEvents = admobModule.InterstitialAdPluginEvents;
+} catch {
+  // AdMob not available (e.g., in web dev environment)
+}
 
 export default function App() {
   const gameOverCountRef = useRef(0);
-  const isShowingAdRef = useRef(false);
 
   const handleGameOver = useCallback(async () => {
     gameOverCountRef.current++;
     
-    // Show AdMob ad every 5 game overs
-    if (gameOverCountRef.current % 5 === 0) {
-      isShowingAdRef.current = true;
-      
+    // Show AdMob ad every 5 game overs (only if AdMob is available)
+    if (AdMob && gameOverCountRef.current % 5 === 0) {
       // Load and show ad asynchronously (non-blocking)
       (async () => {
         try {
@@ -22,22 +30,25 @@ export default function App() {
           await AdMob.showInterstitial();
         } catch (error) {
           console.error('AdMob error:', error);
-          isShowingAdRef.current = false;
         }
       })();
     }
   }, []);
 
   useEffect(() => {
-    // Initialize AdMob once
+    // Initialize AdMob once (only if available)
+    if (!AdMob) return;
+
     (async () => {
       try {
         await AdMob.initialize();
         
         // Listen for ad dismissal event
-        AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => {
-          isShowingAdRef.current = false;
-        });
+        if (InterstitialAdPluginEvents) {
+          AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => {
+            // Ad dismissed
+          });
+        }
       } catch (error) {
         console.error('AdMob initialization error:', error);
       }
@@ -50,7 +61,7 @@ export default function App() {
           (AdMob as any).removeAllListeners();
         }
       } catch (error) {
-        console.error('Error removing AdMob listeners:', error);
+        // Error removing listeners
       }
     };
   }, []);
